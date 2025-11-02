@@ -1,10 +1,10 @@
-module instruction_mem (
+module Instruction_Memory (
     input wire [31:0] i_addr,
     output wire [31:0] o_instr
 );
 
     reg [31:0] rom [0:31];
-    localparam string DEFAULT_MEMFILE = "CPU/Instruction_Mem/test_program.mem";
+    localparam string DEFAULT_MEMFILE = "CPU/Instruction_Memory/test_program.mem";
 
     initial begin
         string memfile;

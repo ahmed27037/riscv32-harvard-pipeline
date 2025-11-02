@@ -80,19 +80,19 @@ module cpu_test;
 
         $display("PASS: register and memory image match expected signature");
         $display("Registers of interest:");
-        $display("x1  = 0x%08h", dut.core1.register_file.reg_file[1]);
-        $display("x2  = 0x%08h", dut.core1.register_file.reg_file[2]);
-        $display("x3  = 0x%08h", dut.core1.register_file.reg_file[3]);
-        $display("x5  = 0x%08h", dut.core1.register_file.reg_file[5]);
-        $display("x6  = 0x%08h", dut.core1.register_file.reg_file[6]);
-        $display("x7  = 0x%08h", dut.core1.register_file.reg_file[7]);
-        $display("x8  = 0x%08h", dut.core1.register_file.reg_file[8]);
-        $display("x9  = 0x%08h", dut.core1.register_file.reg_file[9]);
-        $display("x10 = 0x%08h", dut.core1.register_file.reg_file[10]);
-        $display("x11 = 0x%08h", dut.core1.register_file.reg_file[11]);
-        $display("x12 = 0x%08h", dut.core1.register_file.reg_file[12]);
-        $display("x13 = 0x%08h", dut.core1.register_file.reg_file[13]);
-        $display("x14 = 0x%08h", dut.core1.register_file.reg_file[14]);
+        $display("x1  = 0x%08h", dut.processor.register_file.reg_file[1]);
+        $display("x2  = 0x%08h", dut.processor.register_file.reg_file[2]);
+        $display("x3  = 0x%08h", dut.processor.register_file.reg_file[3]);
+        $display("x5  = 0x%08h", dut.processor.register_file.reg_file[5]);
+        $display("x6  = 0x%08h", dut.processor.register_file.reg_file[6]);
+        $display("x7  = 0x%08h", dut.processor.register_file.reg_file[7]);
+        $display("x8  = 0x%08h", dut.processor.register_file.reg_file[8]);
+        $display("x9  = 0x%08h", dut.processor.register_file.reg_file[9]);
+        $display("x10 = 0x%08h", dut.processor.register_file.reg_file[10]);
+        $display("x11 = 0x%08h", dut.processor.register_file.reg_file[11]);
+        $display("x12 = 0x%08h", dut.processor.register_file.reg_file[12]);
+        $display("x13 = 0x%08h", dut.processor.register_file.reg_file[13]);
+        $display("x14 = 0x%08h", dut.processor.register_file.reg_file[14]);
 
         $display("Data memory sample:");
         $display("mem[%0d] = %0d", MEM_ADDR_0, dut.dmem.ram[MEM_ADDR_0]);
@@ -120,7 +120,7 @@ module cpu_test;
                 @(posedge clk);
                 if (resetn &&
                     dut.pc == FINISH_PC &&
-                    dut.core1.register_file.reg_file[DONE_REG_IDX] == EXP_X13 &&
+                    dut.processor.register_file.reg_file[DONE_REG_IDX] == EXP_X13 &&
                     dut.dmem.ram[DONE_MEM_ADDR] == EXP_DONE_MEM) begin
                     done = 1;
                     disable wait_loop;
@@ -130,7 +130,7 @@ module cpu_test;
         if (!done) begin
             $display("DEBUG: Timeout: pc=0x%08h x13=0x%08h mem[28]=0x%08h",
                      dut.pc,
-                     dut.core1.register_file.reg_file[DONE_REG_IDX],
+                     dut.processor.register_file.reg_file[DONE_REG_IDX],
                      dut.dmem.ram[DONE_MEM_ADDR]);
             $fatal(1, "Timeout waiting for completion.");
         end
@@ -162,7 +162,7 @@ module cpu_test;
     endtask
 
     task automatic expect_reg(input int idx, input logic [31:0] expected);
-        logic [31:0] value = dut.core1.register_file.reg_file[idx];
+        logic [31:0] value = dut.processor.register_file.reg_file[idx];
         if (value !== expected)
             $fatal(1, "x%0d mismatch: got 0x%08h expected 0x%08h", idx, value, expected);
     endtask
