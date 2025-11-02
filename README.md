@@ -8,22 +8,6 @@ The design mirrors the baseline computer-architecture pipeline taught in undergr
 ## High Level
 ![](Schematic_Diagrams/High_Level_CPU_diagram.png)
 
-## IF
-![](Schematic_Diagrams/Processor_IF.png)
-
-## ID
-![](Schematic_Diagrams/ID_blocks.png)
-![](Schematic_Diagrams/ID_signals.png)
-
-## EXE
-![](Schematic_Diagrams/EXE_blocks.png)
-![](Schematic_Diagrams/EXE_signals.png)
-
-## MEM
-![](Schematic_Diagrams/MEM.png)
-
-## WB
-![](Schematic_Diagrams/WB.png)
 
 
 ---
