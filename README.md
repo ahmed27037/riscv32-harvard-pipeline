@@ -61,9 +61,9 @@ graph TB
 
 The processor separates instruction memory (ROM) and data memory (RAM), allowing simultaneous instruction fetch and data access.
 
-![CPU Waveform](Diagrams/waveform.png)
 
-*The waveform shows the PC incrementing by 4 each cycle as instructions flow through the pipeline stages.*
+
+
 
 ### RISC-V Top-Level Architecture
 
