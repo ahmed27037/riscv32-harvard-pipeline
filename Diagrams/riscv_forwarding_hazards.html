@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISC-V Forwarding & Hazards</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: white; padding: 8px; color: #333; }
+        .title { text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #222; }
+        .section { margin-bottom: 6px; border: 1.5px solid #333; border-radius: 5px; padding: 5px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .section-title { font-weight: bold; font-size: 9px; margin-bottom: 4px; color: #222; padding-bottom: 2px; border-bottom: 1.5px solid #666; }
+        .pipeline-flow { display: flex; justify-content: space-between; margin: 5px 0; gap: 3px; }
+        .stage-box { border: 1.5px solid #555; border-radius: 4px; padding: 4px; text-align: center; flex: 1; background: #f0f8ff; }
+        .stage-label { font-weight: bold; font-size: 8px; margin-bottom: 3px; color: #222; }
+        .data-item { font-size: 6.5px; padding: 2px 0; border-top: 1px solid #ccc; color: #555; }
+        .forwarding-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 6.5px; border-radius: 4px; overflow: hidden; }
+        .forwarding-table th, .forwarding-table td { border: 1px solid #666; padding: 3px; text-align: left; }
+        .forwarding-table th { background: #e0e8ff; font-weight: bold; color: #222; }
+        .forwarding-table td { background: white; }
+        .hazard-box { border: 1.5px solid #555; border-radius: 4px; padding: 5px; margin: 5px 0; background: #fff8e8; }
+        .hazard-title { font-weight: bold; font-size: 8px; margin-bottom: 3px; color: #222; }
+        .hazard-condition { font-size: 6.5px; font-family: 'Courier New', monospace; background: white; padding: 4px; border-left: 2px solid #666; border-radius: 2px; margin: 3px 0; color: #444; }
+        .hazard-action { font-size: 6.5px; margin-top: 3px; padding-left: 6px; color: #555; }
+        .hazard-action li { margin: 1px 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 6.5px; border-radius: 4px; overflow: hidden; }
+        table th, table td { border: 1px solid #666; padding: 3px; }
+        table th { background: #e0e8ff; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="title">RISC-V Pipeline - Forwarding and Hazard Detection</div>
+    <div class="section">
+        <div class="section-title">Data Forwarding Paths</div>
+        <div class="pipeline-flow">
+            <div class="stage-box"><div class="stage-label">ID Stage</div><div class="data-item">rs1, rs2</div><div class="data-item">RegFile</div><div class="data-item">Read</div></div>
+            <div class="stage-box"><div class="stage-label">EXE Stage</div><div class="data-item">ALU Result</div><div class="data-item">exe_data</div><div class="data-item">Path 01</div></div>
+            <div class="stage-box"><div class="stage-label">MEM Stage</div><div class="data-item">ALU Result</div><div class="data-item">mem_data</div><div class="data-item">Path 10</div><div class="data-item" style="margin-top: 3px;">Mem Data</div><div class="data-item">mod_rd_dmem</div><div class="data-item">Path 11</div></div>
+            <div class="stage-box"><div class="stage-label">WB Stage</div><div class="data-item">Write Data</div><div class="data-item">reg_wdata</div><div class="data-item">To RegFile</div></div>
+        </div>
+        <table class="forwarding-table">
+            <thead><tr><th>fwda/fwdb</th><th>Source</th><th>Condition</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td>00</td><td>Register File</td><td>Default</td><td>Normal read, no forwarding</td></tr>
+                <tr><td>01</td><td>EXE Stage ALU</td><td>EXE_wreg & EXE_rd==rs1/rs2 & !EXE_mem2reg</td><td>ALU-ALU forwarding</td></tr>
+                <tr><td>10</td><td>MEM Stage ALU</td><td>MEM_wreg & MEM_rd==rs1/rs2 & !MEM_mem2reg</td><td>MEM forwarding</td></tr>
+                <tr><td>11</td><td>MEM Stage Memory</td><td>MEM_wreg & MEM_rd==rs1/rs2 & MEM_mem2reg</td><td>Load forwarding</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="section">
+        <div class="section-title">Hazard Detection</div>
+        <div class="hazard-box">
+            <div class="hazard-title">Load-Use Hazard (Data Hazard)</div>
+            <div class="hazard-condition">IF (EXE_wreg AND EXE_mem2reg AND EXE_rd != 0 AND (EXE_rd == rs1 OR EXE_rd == rs2))</div>
+            <div class="hazard-action"><strong>Action: STALL pipeline</strong><ul><li>Insert bubble in IF/ID</li><li>Hold PC register</li><li>Prevent IF/ID update</li></ul></div>
+        </div>
+        <div class="hazard-box">
+            <div class="hazard-title">Control Hazard (Branch/Jump)</div>
+            <div class="hazard-condition">IF (branch taken OR jump instruction)</div>
+            <div class="hazard-action"><strong>Action: FLUSH IF/ID register</strong><ul><li>Clear IF/ID (set NOP)</li><li>Update PC to target</li><li>Branch in ID stage</li><li>One cycle penalty</li></ul></div>
+        </div>
+        <div class="hazard-box">
+            <div class="hazard-title">Data Hazard (Resolved by Forwarding)</div>
+            <div class="hazard-condition">IF (ID needs data from EXE/MEM)</div>
+            <div class="hazard-action"><strong>Action: Forward data</strong><ul><li>No stall needed</li><li>ALU-ALU: Zero penalty</li><li>MEM: Zero penalty</li></ul></div>
+        </div>
+        <div class="hazard-box">
+            <div class="hazard-title">PC Source Selection (pcsrc[1:0])</div>
+            <table style="margin-top: 3px;"><tr><th>pcsrc</th><th>Source</th><th>Instruction</th></tr><tr><td>00</td><td>PC + 4</td><td>Normal sequential</td></tr><tr><td>01</td><td>Branch/JALR</td><td>BEQ, BNE, BLT, BGE, JALR</td></tr><tr><td>10</td><td>JAL</td><td>Jump and Link</td></tr></table>
+        </div>
+    </div>
+</body>
+</html>

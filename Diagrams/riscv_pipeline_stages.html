@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISC-V 5-Stage Pipeline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: white; padding: 8px; color: #333; }
+        .title { text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #222; }
+        .stage-section { margin-bottom: 6px; border: 1.5px solid #333; border-radius: 5px; padding: 4px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .stage-header { font-weight: bold; font-size: 9px; margin-bottom: 3px; color: #222; padding-bottom: 2px; border-bottom: 1.5px solid #666; }
+        .components { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 3px; margin-top: 3px; }
+        .component { border: 1.5px solid #555; border-radius: 4px; padding: 3px; background: #f0f8ff; }
+        .component-title { font-weight: bold; font-size: 7px; margin-bottom: 2px; color: #222; }
+        .component-content { font-size: 6px; line-height: 1.2; color: #555; }
+        .pipeline-reg { border: 1.5px dashed #666; border-radius: 4px; padding: 3px; margin: 4px auto; text-align: center; background: #fff9e6; font-size: 6.5px; max-width: 95%; color: #555; }
+        .connection-line { width: 1.5px; height: 8px; background: #333; margin: 2px auto; position: relative; }
+        .connection-line::after { content: ''; position: absolute; bottom: -3px; left: -3px; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid #333; }
+        .stage-section:nth-child(1) { background: #e8f4f8; }
+        .stage-section:nth-child(3) { background: #f0fff0; }
+        .stage-section:nth-child(5) { background: #fff8e8; }
+        .stage-section:nth-child(7) { background: #ffe8f0; }
+        .stage-section:nth-child(9) { background: #f5f0ff; }
+    </style>
+</head>
+<body>
+    <div class="title">RISC-V 5-Stage Pipeline - Detailed View</div>
+    <div class="stage-section">
+        <div class="stage-header">STAGE 1: IF (Instruction Fetch)</div>
+        <div class="components">
+            <div class="component"><div class="component-title">PC Register</div><div class="component-content">pc_reg.v<br>Input: pc_next<br>Out: if_pc[31:0]</div></div>
+            <div class="component"><div class="component-title">PC + 4 Adder</div><div class="component-content">cla_32bit<br>In: if_pc<br>Out: if_p4[31:0]</div></div>
+            <div class="component"><div class="component-title">PC Next MUX</div><div class="component-content">mux_3to1<br>In: if_p4, branch_pc, jal_pc<br>Sel: pcsrc[1:0]</div></div>
+            <div class="component"><div class="component-title">Instruction Memory</div><div class="component-content">instruction_mem.v<br>Addr: if_pc[31:0]<br>Out: instr[31:0]</div></div>
+        </div>
+    </div>
+    <div class="pipeline-reg"><strong>IF/ID Pipeline Register:</strong> if_pc→id_pc | if_p4→id_p4 | instr→id_instr</div>
+    <div class="connection-line"></div>
+    <div class="stage-section">
+        <div class="stage-header">STAGE 2: ID (Instruction Decode)</div>
+        <div class="components">
+            <div class="component"><div class="component-title">Opcode Decoder</div><div class="component-content">Extracts: opcode, funct3, funct7<br>rd, rs1, rs2</div></div>
+            <div class="component"><div class="component-title">Immediate Decoder</div><div class="component-content">imm_decode.v<br>Out: imm_val[31:0]<br>Type: I/S/B/U/J</div></div>
+            <div class="component"><div class="component-title">Controller</div><div class="component-content">controller.v<br>• Decode type<br>• Control signals<br>• Hazard detection<br>• Forwarding</div></div>
+            <div class="component"><div class="component-title">Forwarding MUX (rs1)</div><div class="component-content">mux_4to1<br>Sel: fwda[1:0]<br>00:RF 01:EXE<br>10:MEM 11:MEM_D</div></div>
+            <div class="component"><div class="component-title">Forwarding MUX (rs2)</div><div class="component-content">mux_4to1<br>Sel: fwdb[1:0]<br>00:RF 01:EXE<br>10:MEM 11:MEM_D</div></div>
+            <div class="component"><div class="component-title">Register File</div><div class="component-content">regfile.v<br>Read: rs1, rs2<br>Write: rd (WB)<br>32 × 32-bit</div></div>
+            <div class="component"><div class="component-title">Comparator</div><div class="component-content">comp_32.v<br>In: regdata1, regdata2<br>Out: lt, eq</div></div>
+            <div class="component"><div class="component-title">Branch/JAL PC</div><div class="component-content">Adders:<br>• jal_pc = id_pc + imm<br>• branch_pc = id_pc + imm<br>• jalr_pc = r1 + imm</div></div>
+        </div>
+    </div>
+    <div class="pipeline-reg"><strong>ID/EXE Pipeline Register:</strong> Ctrl: mem2reg, wmem, wreg, aluc, aluimm... | Data: pc, r1, r2, imm, rd, lt</div>
+    <div class="connection-line"></div>
+    <div class="stage-section">
+        <div class="stage-header">STAGE 3: EXE (Execute)</div>
+        <div class="components">
+            <div class="component"><div class="component-title">ALU Input A MUX</div><div class="component-content">Sel: auipc<br>0: regdata1<br>1: exe_pc</div></div>
+            <div class="component"><div class="component-title">ALU Input B MUX</div><div class="component-content">Sel: aluimm<br>0: regdata2<br>1: exe_imm</div></div>
+            <div class="component"><div class="component-title">ALU Unit</div><div class="component-content">ALU.v<br>• Add/Sub (CLA_32)<br>• Logic (AND/OR/XOR)<br>• Shifter (SLL/SRL/SRA)<br>• Ctrl: aluc[5:0]</div></div>
+            <div class="component"><div class="component-title">Result MUX</div><div class="component-content">mux_3to1<br>0: ALU result<br>1: SLT result<br>2: PC+4 (JAL)</div></div>
+            <div class="component"><div class="component-title">Store Modifier</div><div class="component-content">store_modifier<br>sb: byte<br>sh: halfword<br>sw: word</div></div>
+        </div>
+    </div>
+    <div class="pipeline-reg"><strong>EXE/MEM Pipeline Register:</strong> Ctrl: mem2reg, wmem, wreg, ls_b, ls_h... | Data: alu_result, store_data, rd</div>
+    <div class="connection-line"></div>
+    <div class="stage-section">
+        <div class="stage-header">STAGE 4: MEM (Memory Access)</div>
+        <div class="components">
+            <div class="component"><div class="component-title">Data Memory</div><div class="component-content">D_memory.v<br>Addr: mem_data (ALU)<br>Write: mem_wmem, mem_dmem<br>Read: dmem_in[31:0]</div></div>
+            <div class="component"><div class="component-title">Load Modifier</div><div class="component-content">load_modifier<br>lb/lh/lw extraction<br>Sign extension</div></div>
+        </div>
+    </div>
+    <div class="pipeline-reg"><strong>MEM/WB Pipeline Register:</strong> Ctrl: mem2reg, wreg | Data: alu_result, dmem_data, rd</div>
+    <div class="connection-line"></div>
+    <div class="stage-section">
+        <div class="stage-header">STAGE 5: WB (Write-Back)</div>
+        <div class="components">
+            <div class="component"><div class="component-title">Write-Back MUX</div><div class="component-content">Sel: mem2reg<br>0: ALU result<br>1: Memory data<br>Out: reg_wdata[31:0]</div></div>
+            <div class="component"><div class="component-title">Register File Write</div><div class="component-content">regfile.v<br>Write En: wreg<br>Port: wb_rd<br>Data: reg_wdata<br>(x0 = 0)</div></div>
+        </div>
+    </div>
+</body>
+</html>

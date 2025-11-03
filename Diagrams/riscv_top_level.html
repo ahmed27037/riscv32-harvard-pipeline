@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISC-V CPU - Top Level</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: white; padding: 8px; color: #333; }
+        .title { text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #222; }
+        .diagram { position: relative; width: 100%; max-width: 650px; margin: 0 auto; }
+        .block { position: relative; border: 1.5px solid #333; border-radius: 6px; background: white; padding: 5px; text-align: center; margin: 0 auto; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .block-title { font-weight: bold; font-size: 9px; margin-bottom: 2px; color: #222; }
+        .block-content { font-size: 7px; line-height: 1.2; color: #555; }
+        .instruction-mem { width: 180px; margin-top: 6px; background: #e8f4f8; }
+        .processor { width: 480px; padding: 6px; margin: 6px auto; background: #f5f0ff; }
+        .data-mem { width: 180px; margin: 6px auto; background: #ffe8f0; }
+        .pipeline-container { display: flex; justify-content: space-between; margin: 5px 0; position: relative; gap: 2px; }
+        .stage { border: 1.5px solid #555; border-radius: 4px; background: white; padding: 3px; text-align: center; flex: 1; font-size: 7px; position: relative; }
+        .stage-name { font-weight: bold; font-size: 8px; color: #333; }
+        .stage-arrow { position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 8px; height: 1.5px; background: #333; }
+        .stage-arrow::after { content: ''; position: absolute; right: -2px; top: -2px; width: 0; height: 0; border-left: 4px solid #333; border-top: 3px solid transparent; border-bottom: 3px solid transparent; }
+        .connection-container { position: relative; width: 100%; }
+        .vertical-line { width: 1.5px; height: 8px; background: #333; margin: 0 auto; position: relative; }
+        .vertical-line::after { content: ''; position: absolute; bottom: -3px; left: -3px; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid #333; }
+        .signal-label { font-size: 6px; text-align: center; margin: 2px 0; font-weight: 500; color: #555; }
+        .return-line { width: 1.5px; height: 45px; background: #333; margin: 4px auto; position: relative; border-left: 1.5px dashed #666; border-right: none; border-top: none; border-bottom: none; }
+        .return-line::before { content: ''; position: absolute; top: -3px; left: -3px; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 4px solid #333; }
+    </style>
+</head>
+<body>
+    <div class="title">RISC-V Harvard Architecture CPU - Top Level</div>
+    <div class="diagram">
+        <div class="connection-container">
+            <div class="block instruction-mem">
+                <div class="block-title">Instruction Memory (ROM)</div>
+                <div class="block-content">instruction_mem.v<br>Addr: pc[31:0]<br>Out: instr[31:0]</div>
+            </div>
+            
+            <div class="vertical-line" style="margin-top: 4px; margin-bottom: 2px;"></div>
+            <div class="signal-label">instr[31:0]</div>
+            
+            <div class="block processor">
+                <div class="block-title">RV32I Processor (5-Stage Pipeline)</div>
+                <div class="pipeline-container">
+                    <div class="stage"><div class="stage-name">IF</div>Fetch</div>
+                    <div class="stage-arrow"></div>
+                    <div class="stage"><div class="stage-name">ID</div>Decode</div>
+                    <div class="stage-arrow"></div>
+                    <div class="stage"><div class="stage-name">EXE</div>Exec</div>
+                    <div class="stage-arrow"></div>
+                    <div class="stage"><div class="stage-name">MEM</div>Mem</div>
+                    <div class="stage-arrow"></div>
+                    <div class="stage"><div class="stage-name">WB</div>WB</div>
+                </div>
+                <div style="margin-top: 4px; padding-top: 3px; border-top: 1px solid #ccc; font-size: 7px; text-align: left; color: #555;">
+                    <strong>Components:</strong> RegFile (32×32b), Controller, Forwarding, ALU, Comparator, Pipeline Regs
+                </div>
+            </div>
+            
+            <div class="vertical-line" style="margin-top: 6px; margin-bottom: 2px;"></div>
+            <div class="signal-label">addr_out[31:0] | dmem_out[31:0] | wmem</div>
+            
+            <div class="block data-mem">
+                <div class="block-title">Data Memory (RAM)</div>
+                <div class="block-content">D_memory.v<br>Addr: addr_out[31:0]<br>Write: wmem, dmem_out<br>Read: dmem_in[31:0]</div>
+            </div>
+            
+            <div class="return-line" style="margin-top: 6px;"></div>
+            <div class="signal-label">dmem_in[31:0]</div>
+        </div>
+    </div>
+</body>
+</html>
